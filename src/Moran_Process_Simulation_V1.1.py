@@ -15,7 +15,14 @@ def initialize_states(graph, fraction_infected=0.1):
     for node in graph.nodes():
         graph.nodes[node]['state'] = 1 if random.random() < fraction_infected else 0
 
-def moran_step(graph):
+def moran_step(graph, healing_rate=0.1):
+    # Healing step
+    for node in graph.nodes():
+        if graph.nodes[node]['state'] == 1 and random.random() < healing_rate:
+            graph.nodes[node]['state'] = 0
+            graph.nodes[node]['fitness'] = 1  # Reset fitness when healed
+
+    # Reproduction step
     total_fitness = sum(graph.nodes[node]['fitness'] * graph.nodes[node]['state'] for node in graph.nodes())
     if total_fitness == 0:
         return graph  # No nodes to reproduce
@@ -29,7 +36,9 @@ def moran_step(graph):
     neighbors = list(graph.neighbors(reproduction_node))
     if neighbors:
         replacement_node = random.choice(neighbors)
-        graph.nodes[replacement_node]['state'] = graph.nodes[reproduction_node]['state']
+        if graph.nodes[replacement_node]['state'] == 0:  # Only infect if the neighbor is healthy
+            graph.nodes[replacement_node]['state'] = 1
+            graph.nodes[replacement_node]['fitness'] = graph.nodes[reproduction_node]['fitness']  # Inherit fitness upon infection
     return graph
 
 def visualize_graph(graph, ax, info_ax, pos):
@@ -38,11 +47,13 @@ def visualize_graph(graph, ax, info_ax, pos):
     nx.draw(graph, pos=pos, ax=ax, node_color=node_color, with_labels=True)
 
     # Update the information text
-    infected_count = sum(1 for node in graph.nodes() if graph.nodes[node]['state'] == 1)
+    infected_nodes = [node for node in graph.nodes() if graph.nodes[node]['state'] == 1]
+    mutation_fitness = np.mean([graph.nodes[node]['fitness'] for node in infected_nodes]) if infected_nodes else 1
+    infected_count = len(infected_nodes)
     average_fitness = sum(graph.nodes[node]['fitness'] for node in graph.nodes()) / len(graph.nodes())
     total_nodes = len(graph.nodes())
     total_edges = len(graph.edges())
-    info_text = f"Nodes: {total_nodes}, Edges: {total_edges}\nInfected: {infected_count}\nAverage Fitness: {average_fitness:.2f}"
+    info_text = f"Nodes: {total_nodes}, Edges: {total_edges}\nInfected: {infected_count}\nMutation Fitness: {mutation_fitness:.2f}\nAverage Fitness: {average_fitness:.2f}"
     info_ax.clear()
     info_ax.axis('off')
     info_ax.text(0.02, 0.5, info_text, transform=info_ax.transAxes, ha='left', va='center')
@@ -57,8 +68,9 @@ def step(event):
 def change_fitness(delta):
     global current_graph
     for node in current_graph.nodes():
-        new_fitness = current_graph.nodes[node]['fitness'] + delta
-        current_graph.nodes[node]['fitness'] = max(0.1, new_fitness)  # Ensure fitness does not go below 0.1
+        if current_graph.nodes[node]['state'] == 1:  # Only modify fitness of infected nodes
+            new_fitness = current_graph.nodes[node]['fitness'] + delta
+            current_graph.nodes[node]['fitness'] = max(0.1, new_fitness)  # Ensure fitness does not go below 0.1
     visualize_graph(current_graph, ax, info_ax, pos)
 
 def increase_fitness(event):
