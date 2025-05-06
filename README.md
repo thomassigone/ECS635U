@@ -27,7 +27,7 @@ This tool extends the classical two‑type Moran process to an **arbitrary numbe
 ```bash
 # pick a folder of your choice
 $ git clone https://github.com/thomassigone/ECS635U.git
-$ cd multi‑type‑moran
+$ cd ECS635U
 ```
 
 ### 1.3 Create & activate the Conda environment
