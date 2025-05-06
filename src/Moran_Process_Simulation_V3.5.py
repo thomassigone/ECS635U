@@ -1060,7 +1060,7 @@ def clear_graph(event):
 
 # --- Set up Figure, Axes, and Buttons ---
 fig = plt.figure(figsize=(12, 8))
-fig.canvas.manager.set_window_title('Multi-Type Moran Process Simulation V3.4')
+fig.canvas.manager.set_window_title('Multi-Type Moran Process Simulation V3.5')
 ax = fig.add_subplot(111)
 plt.subplots_adjust(left=0.21, bottom=0.12, right=0.98, top=0.97)
 
